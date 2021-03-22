@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}购买记录{% endblock title %}
+
+
+{% block fullcard %}
+
+    <div class="card">
+        <div class="card-header">
+            {{ purchase.customer.name }}
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered table-sm">
+                <thead class="thead-light">
+                <tr>
+                    <th>序号</th>
+                    <th>购买者</th>
+                    <th>商品名称</th>
+                    <th>商品价格</th>
+                    <th>购买日期</th>
+                    <th>生产日期</th>
+                    <th>购买数量</th>
+                </tr>
+                </thead>
+                {% for purchase in purchases %}
+                    <tbody>
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ purchase.customer }}</td>
+                        <td>{{ purchase.commodity }}</td>
+                        <td>{{ purchase.commodity.price }}</td>
+                        <td>{{ purchase.purchase_date }}</td>
+                        <td>{{ purchase.commodity.production_date }}</td>
+                        <td>{{ purchase.num }}</td>
+                    </tr>
+                    </tbody>
+                {% endfor %}
+            </table>
+
+        </div>
+    </div>
+
+    <div id="container" style="min-width:400px;height:400px"></div>
+    <script src="{% static 'dist/js/highcharts.js' %}"></script>
+    <script>
+    var chart = Highcharts.chart('container', {
+	chart: {
+		type: 'column'
+	},
+	title: {
+		text: '超市收入对比图'
+	},
+	xAxis: {
+		categories: [
+            {% for supermarket1 in supermarket %}
+                "{{ supermarket1 }}",
+            {% endfor %}
+        ]
+	},
+	yAxis: {
+		min: 0,
+		title: {
+			text: '超市收入'
+		},
+		stackLabels: {  // 堆叠数据标签
+			enabled: true,
+			style: {
+				fontWeight: 'bold',
+				color: (Highcharts.theme && Highcharts.theme.textColor) || 'gray'
+			}
+		}
+	},
+	legend: {
+		align: 'right',
+		x: -30,
+		verticalAlign: 'top',
+		y: 25,
+		floating: true,
+		backgroundColor: (Highcharts.theme && Highcharts.theme.background2) || 'white',
+		borderColor: '#CCC',
+		borderWidth: 1,
+		shadow: false
+	},
+	tooltip: {
+		formatter: function () {
+			return '<b>' + this.x + '</b><br/>' +
+				this.series.name + ': ' + this.y + '<br/>' +
+				'总量: ' + this.point.stackTotal;
+		}
+	},
+	plotOptions: {
+		column: {
+			stacking: 'normal',
+			dataLabels: {
+				enabled: true,
+				color: (Highcharts.theme && Highcharts.theme.dataLabelsColor) || 'white',
+				style: {
+					// 如果不需要数据标签阴影，可以将 textOutline 设置为 'none'
+					textOutline: '1px 1px black'
+				}
+			}
+		}
+	},
+    	series: [
+    {% for key, value in dict.items %}
+    {
+		name: "{{ key }}",
+		data: [
+            {% for i,j in value.items %}
+                {{ j }},
+                {% endfor %}
+        ]
+	},
+    {% endfor %}
+    ]
+});
+    </script>
+
+
+
+{% endblock fullcard %}

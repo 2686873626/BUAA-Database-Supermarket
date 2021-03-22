@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% load static %}
+
+
+{% block content-header %}
+    <div class="card-header">
+        <a href="{% url 'supermarket-list' %}" class="btn btn-tool">
+            <i class="fas fa-backward"></i>
+        </a>
+    {% if user.is_admin %}
+        <div class="card-tools">
+            <a href="{% url 'supermarket-update' object.id %}" class="btn btn-tool">
+                <i class="fas fa-edit"></i>
+            </a>
+            <a href="{% url 'supermarket-delete' object.id %}" class="btn btn-tool">
+                <i class="fas fa-times"></i>
+            </a>
+        </div>
+    {% endif %}
+    </div>
+{% endblock content-header %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-sm-8">
+            <div>
+
+                <div class="form-group border-bottom row">
+                    <label class="col">
+                        超市名称
+                    </label>
+                    <div class="col">
+                        {{ object.name }}
+                    </div>
+                </div>
+
+                <div class="form-group border-bottom row">
+                    <label class="col">
+                        开始营业时间
+                    </label>
+                    <div class="col">
+                        {{ object.start_time }}
+                    </div>
+                </div>
+
+                <div class="form-group border-bottom row">
+                    <label class="col">
+                        结束营业时间
+                    </label>
+                    <div class="col">
+                        {{ object.end_time }}
+                    </div>
+                </div>
+
+                <div class="form-group border-bottom row">
+                    <label class="col">
+                        电话号码
+                    </label>
+                    <div class="col">
+                        {{ object.mobile_number }}
+                    </div>
+                </div>
+
+                <div class="form-group border-bottom row">
+                    <label class="col">
+                        地址
+                    </label>
+                    <div class="col">
+                        {{ object.address }}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+    <div class="card-header">
+        <div class="card-tools">
+            <a class="btn btn-dark" href="{% url 'supermarket-detail-commodity' object.id %}">查看{{ object.name }}售卖的商品>></a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            {{ object.name }}的活动
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered table-sm">
+                <thead class="thead-light">
+                <tr>
+                    <th>序号</th>
+                    <th>活动名称</th>
+                    <th>活动开始时间</th>
+                    <th>活动结束时间</th>
+                    <th>活动描述</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for key, result in results.items %}
+                    {% ifequal result.supermarket.id object.id %}
+                        {% for activity in result.activitys %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ activity.name }}</td>
+                                <td>{{ activity.start_date }}</td>
+                                <td>{{ activity.end_date }}</td>
+                                <td>{{ activity.comment }}</td>
+                            </tr>
+                        {% endfor %}
+                    {% endifequal %}
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            {{ object.name }}的物流
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered table-sm">
+                <thead class="thead-light">
+                <tr>
+                    <th>序号</th>
+                    <th>物流名称</th>
+                    <th>电话号码</th>
+                    <th>地址</th>
+                    <th>物流描述</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for key, result in resultsOfExpress.items %}
+                    {% ifequal result.supermarket.id object.id %}
+                        {% for activity in result.expresses %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ activity.name }}</td>
+                                <td>{{ activity.mobile_number }}</td>
+                                <td>{{ activity.address }}</td>
+                                <td>{{ activity.comment }}</td>
+                            </tr>
+                        {% endfor %}
+                    {% endifequal %}
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+    <div class="card">
+        <div class="card-header">
+            {{ object.name }}下的部门
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered table-sm">
+                <thead class="thead-light">
+                <tr>
+                    <th>序号</th>
+                    <th>部门名称</th>
+                    <th>电话号码</th>
+                    <th>部门描述</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for department in departments %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ department.name }}</td>
+                        <td>{{ department.mobile_number }}</td>
+                        <td>{{ department.comment }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+    <div id="container" style="min-width:400px;height:400px"></div>
+    <script src="{% static 'dist/js/highcharts.js' %}"></script>
+    <script>
+    var chart = Highcharts.chart('container', {
+	title: {
+		text: '超市各月收入变化'
+	},
+    xAxis: {
+		categories: ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月']
+	},
+	yAxis: {
+		title: {
+			text: '超市收入'
+		}
+	},
+	legend: {
+		layout: 'vertical',
+		align: 'right',
+		verticalAlign: 'middle'
+	},
+	series: [{
+		name: '{{ object.name }}收入',
+		data: [
+            {% for i in income %}
+                {{ i }},
+            {% endfor %}
+            ]
+	},],
+	responsive: {
+		rules: [{
+			condition: {
+				maxWidth: 500
+			},
+			chartOptions: {
+				legend: {
+					layout: 'horizontal',
+					align: 'center',
+					verticalAlign: 'bottom'
+				}
+			}
+		}]
+	}
+});
+    </script>
+{% endblock content %}

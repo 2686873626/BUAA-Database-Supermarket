@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}部门列表{% endblock title %}
+
+{% block breadcrumb %}
+    {% if user.is_admin %}
+        <a class="btn btn-primary" href="{% url 'department-create' %}"><i
+                class="fas fa-plus"></i> 新的部门</a>
+    {% endif %}
+{% endblock breadcrumb %}
+
+{% block content %}
+    <table id="stafftable" class="table table-bordered table-hover">
+        <thead class="thead-light">
+        <tr>
+            <th>序号</th>
+            <th>部门名称</th>
+            <th>电话号码</th>
+            <th>员工数量</th>
+            <th>部门描述</th>
+            <th>所属超市</th>
+        </tr>
+        </thead>
+        <tbody>
+
+        {% for key, value in departments.items %}
+            <tr class='clickable-row' data-href="{% url 'department-detail' value.department.id %}">
+                <td>{{ forloop.counter }}</td>
+                <td>{{ value.department.name }}</td>
+                <td>{{ value.department.mobile_number }}</td>
+                <td>{{ value.staffCount }}</td>
+                <td>{{ value.department.comment }}</td>
+                <td>{{ value.department.supermarket }}</td>
+            </tr>
+        {% endfor %}
+
+        </tbody>
+    </table>
+
+    <div id="container" style="min-width:400px;height:400px"></div>
+    <script src="{% static 'dist/js/highcharts.js' %}"></script>
+    <script src="{% static 'dist/js/highcharts-more.js' %}"></script>
+    <script>
+        var colors = Highcharts.getOptions().colors,
+            categories = [
+                {% for x in supermarkets %}
+                    "{{ x.supermarket.name }}",
+                {% endfor %}
+            ],
+            data = [
+                {% for x in supermarkets %}
+                    {
+                        "y":{{ x.proportion }},
+                        "color": colors[{{ x.counter }}],
+                        "drilldown": {
+                            "name": "{{ x.supermarket.name }}",
+                            "categories": [
+                                {% for y in x.departments %}
+                                    "{{ y.department }}",
+                                {% endfor %}
+                            ],
+                            "data": [
+                                {% for y in x.departments %}
+                                    {{ y.proportion }},
+                                {% endfor %}
+                            ]
+                        }
+                    },
+                {% endfor %}
+            ],
+            browserData = [],
+            versionsData = [],
+            i,
+            j,
+            dataLen = data.length,
+            drillDataLen,
+            brightness;
+        // Build the data arrays
+        for (i = 0; i < dataLen; i += 1) {
+            // add browser data
+            browserData.push({
+                name: categories[i],
+                y: data[i].y,
+                color: data[i].color
+            });
+            // add version data
+            drillDataLen = data[i].drilldown.data.length;
+            for (j = 0; j < drillDataLen; j += 1) {
+                brightness = 0.2 - (j / drillDataLen) / 5;
+                versionsData.push({
+                    name: data[i].drilldown.categories[j],
+                    y: data[i].drilldown.data[j],
+                    color: Highcharts.Color(data[i].color).brighten(brightness).get()
+                });
+            }
+        }
+
+        Highcharts.chart('container', {
+            chart: {
+                type: 'pie'
+            },
+            title: {
+                text: '各超市部门员工占比'
+            },
+            yAxis: {
+                title: {
+                    text: 'Total percent market share'
+                }
+            },
+            plotOptions: {
+                pie: {
+                    shadow: false,
+                    center: ['50%', '50%']
+                }
+            },
+            tooltip: {
+                valueSuffix: '%'
+            },
+            series: [{
+                name: 'Browsers',
+                data: browserData,
+                size: '60%',
+                dataLabels: {
+                    formatter: function () {
+                        return this.y > 5 ? this.point.name : null;
+                    },
+                    color: '#ffffff',
+                    distance: -30
+                }
+            }, {
+                name: 'Versions',
+                data: versionsData,
+                size: '80%',
+                innerSize: '60%',
+                dataLabels: {
+                    formatter: function () {
+                        // display only if larger than 1
+                        return this.y > 1 ? '<b>' + this.point.name + ':</b> ' +
+                            this.y + '%' : null;
+                    }
+                },
+                id: 'versions'
+            }],
+            responsive: {
+                rules: [{
+                    condition: {
+                        maxWidth: 400
+                    },
+                    chartOptions: {
+                        series: [{
+                            id: 'versions',
+                            dataLabels: {
+                                enabled: false
+                            }
+                        }]
+                    }
+                }]
+            }
+        });
+    </script>
+{% endblock content %}
+
+
+{% block morejs %}
+    <script>
+        $('#stafftable').DataTable({
+            select: false,
+            language: {
+                "decimal": "",//小数的小数位符号  比如“，”作为数字的小数位符号
+                "emptyTable": "没有数据哟~~",//没有数据时要显示的字符串
+                "info": "当前 _START_ 条到 _END_ 条 共 _TOTAL_ 条",//左下角的信息，变量可以自定义，到官网详细查看
+                "infoEmpty": "无记录",//当没有数据时，左下角的信息
+                "infoFiltered": "(从 _MAX_ 条记录过滤)",//当表格过滤的时候，将此字符串附加到主要信息
+                "infoPostFix": "",//在摘要信息后继续追加的字符串
+                "thousands": ",",//千分位分隔符
+                "lengthMenu": "每页 _MENU_ 条记录",//用来描述分页长度选项的字符串
+                "loadingRecords": "加载中...",//用来描述数据在加载中等待的提示字符串 - 当异步读取数据的时候显示
+                "processing": "处理中...",//用来描述加载进度的字符串
+                "search": "搜索",//用来描述搜索输入框的字符串
+                "zeroRecords": "没有找到",//当没有搜索到结果时，显示
+                "paginate": {
+                    "first": "首页",
+                    "previous": "上一页",
+                    "next": "下一页",
+                    "last": "尾页"
+                }
+            }
+        });
+    </script>
+
+{% endblock morejs %}
